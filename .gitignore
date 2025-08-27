@@ -1,0 +1,29 @@
+# OS / Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Env
+.env
+.env.*
+**/.env
+**/.env.*
+
+# PHP/Laravel
+**/vendor/
+**/storage/*.key
+**/storage/logs/
+**/bootstrap/cache/
+**/public/storage
+
+# Node/Next.js
+**/node_modules/
+**/.next/
+**/out/
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Temp
+**/tmp/

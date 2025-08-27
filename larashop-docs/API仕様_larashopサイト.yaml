@@ -1,0 +1,840 @@
+openapi: 3.0.3
+info:
+  title: Larashop Service Site API - OpenAPI 3.0
+  version: '20230701'
+tags:
+  - name: Auth
+    description: 認証
+  - name: Me
+    description: マイページ用ログインユーザー情報
+  - name: Product
+    description: 商品
+  - name: Deal
+    description: 取引
+paths:
+
+  /larashop/api/auth/signup:
+    post:
+      tags:
+        - Auth
+      summary: 会員仮登録API
+      description: ユーザー会員仮登録用のAPI
+      operationId: signup
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignupRequest"
+      responses:
+        '200':
+          description: 会員仮登録成功時
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResult'
+        '400':
+          description: ログイン失敗時
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: すでにそのメールアドレスは利用されています。
+        '422':
+          description: バリデーションエラー時
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: バリデーションエラー
+                errors:
+                  - field: email
+                    detail: メールアドレスは必須です。
+                  - field: password
+                    detail: パスワードは必須です。
+
+  /larashop/api/auth/signup/verify:
+    post:
+      tags:
+        - Auth
+      summary: 会員本登録API
+      description: 仮登録ユーザーの本登録用API
+      operationId: signupVerify
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignupVerifyRequest"
+      responses:
+        '200':
+          description: 会員本登録成功時
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessToken'
+        '400':
+          description: 会員本登録失敗時
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: 会員本登録に失敗しました。
+        '422':
+          description: バリデーションエラー時
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: "バリデーションエラー"
+                errors:
+                  - field: token
+                    detail: 会員本登録用トークンがありません。
+
+  /larashop/api/auth/signin:
+    post:
+      tags:
+        - Auth
+      summary: ログインAPI
+      description: ログイン用のAPI。Bearerトークンを発行する。
+      operationId: signin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SigninRequest"
+      responses:
+        '200':
+          description: 会員仮登録成功時
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessToken'
+        '400':
+          description: 会員本登録失敗時
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: "メールアドレスまたはパスワードが間違っています。"
+        '422':
+          description: バリデーションエラー時
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: バリデーションエラー
+                errors:
+                  - field: email
+                    detail: メールアドレスは必須です。
+                  - field: password
+                    detail: パスワードは必須です。
+
+  /larashop/api/auth/signout:
+    post:
+      tags:
+        - Auth
+      summary: ログアウトAPI
+      description: ログアウト用のAPI。サーバー側にあるBearerトークンを無効化する。
+      operationId: signout
+      security: [bearerAuth: []]
+      requestBody:
+        content:
+          application/json:
+            schema: {}
+      responses:
+        '200':
+          description: ログアウト成功時
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResult'
+        '400':
+          description: ログアウト失敗時
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: エラーが発生しました。
+
+  /larashop/api/me:
+    get:
+      tags:
+        - Me
+      summary: ログインユーザー情報取得API
+      description: ログインユーザー自身のユーザー情報を取得するためのAPI
+      operationId: getMe
+      security: [bearerAuth: []]
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Me'
+        '400':
+          description: Invalid status value
+    put:
+      tags:
+        - Me
+      summary: ログインユーザー情報更新API
+      description: ユーザー情報を更新するためのAPI
+      operationId: putMe
+      security: [bearerAuth: []]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutMeRequest'
+      responses:
+        '200':
+          description: Successful Operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Me'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'      
+          
+  /larashop/api/me/purchased_products:
+    get:
+      tags:
+        - Me
+      summary: 購入商品一覧取得API
+      description: 購入した商品一覧を取得するためのAPI
+      operationId: getPurchasedProducts
+      security: [bearerAuth: []]
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  products:
+                    type: "array"
+                    items:
+                      $ref: '#/components/schemas/ProductForMyPage'
+
+  /larashop/api/me/purchased_products/{id}/deal:
+    get:
+      tags:
+        - Me
+      summary: 購入商品の取引詳細情報取得API
+      description: 購入した商品の取引情報を取得するためのAPI
+      operationId: getPurchasedProductDeal
+      security: [bearerAuth: []]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DealForMyPage'
+        '404':
+          description: Not Found
+  /larashop/api/me/listed_products:
+    get:
+      tags:
+        - Me
+      summary: 出品商品一覧取得API
+      description: 出品した商品一覧を取得するためのAPI
+      operationId: getListedProducts
+      security: [bearerAuth: []]
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  products:
+                    type: "array"
+                    items:
+                      $ref: '#/components/schemas/ProductForMyPage'
+        '400':
+          description: エラーが発生しました。
+  /larashop/api/me/listed_products/{id}/deal:
+    get:
+      tags:
+        - Me
+      summary: 出品商品の取引詳細情報取得API
+      description: 出品した商品の取引情報を取得するためのAPI
+      operationId: getListedProductDeal
+      security: [bearerAuth: []]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DealForMyPage'
+        '400':
+          description: Invalid status value
+        '404':
+          description: Not Found
+     
+  /larashop/api/products:
+    get:
+      tags:
+        - Product
+      summary: 商品一覧取得API
+      description: 商品一覧取得するためのAPI
+      operationId: getProducts
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  products:
+                    type: "array"
+                    items:
+                      $ref: '#/components/schemas/Product'
+        '400':
+          description: Invalid status value
+    post:
+      tags:
+        - Product
+      summary: 出品API
+      description: 商品を出品するためのAPI
+      operationId: postProduct
+      security: [bearerAuth: []]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PostProductRequest'
+      responses:
+        '201':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          description: Invalid status value
+  /larashop/api/products/{id}:
+    get:
+      tags:
+        - Product
+      summary: 商品詳細取得API
+      description: 商品一覧取得するためのAPI
+      operationId: getProduct
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          description: Invalid status value
+
+  /larashop/api/products/{id}/deal/payment_intent:
+    post:
+      tags:
+        - Deal
+      summary: 商品支払いインテント作成API
+      description: 商品購入のためのStripe支払いインテントを作成するためのAPI
+      operationId: createDealPaymentIntent
+      security: [bearerAuth: []]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentIntent'
+        '400':
+          description: Invalid status value
+  /larashop/api/products/{id}/deal/payment_intent/verify:
+    post:
+      tags:
+        - Deal
+      summary: 商品支払いインテント確認API
+      description: Stripe支払いインテントへの決済処理直後に必要な処理を行わせるためのAPI
+      operationId: confirmDealPayment
+      security: [bearerAuth: []]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ConfirmDealPaymentRequest'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DealForMyPage'
+        '400':
+          description: Invalid status value
+  /larashop/api/products/{id}/deal/cancel:
+    post:
+      tags:
+        - Deal
+      summary: 商品出品キャンセルAPI
+      description: 出品ユーザーが出品をキャンセルするためのAPI
+      operationId: cancelListingProduct
+      security: [bearerAuth: []]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DealForMyPage'
+        '400':
+          description: Invalid status value
+
+
+  /larashop/api/products/{id}/deal/report_delivery:
+    post:
+      tags:
+        - Deal
+      summary: 配送報告API
+      description: 出品者が購入ユーザーに配送報告をするためのAPI
+      operationId: reportDeliveryDeal
+      security: [bearerAuth: []]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DealForMyPage'
+        '400':
+          description: Invalid status value
+  /larashop/api/products/{id}/deal/report_receipt:
+    post:
+      tags:
+        - Deal
+      summary: 受取報告API
+      description: 購入者が出品者に商品の受取報告をするためのAPI
+      operationId: reportReceiptDeal
+      security: [bearerAuth: []]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DealForMyPage'
+
+        '400':
+          description: Invalid status value
+
+components:
+  schemas:
+    AccessToken:
+      type: "object"
+      properties:
+        access_token:
+          type: "string"
+          example: "eyJ0eXAiOABCDEFG1234567890"
+        user:
+          $ref: "#/components/schemas/Me"
+      required:
+        - access_token
+        - user
+
+    Me:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          example: 1
+        email:
+          type: "string"
+          example: "taro@example.com"
+        name:
+          type: "string"
+          example: "山田 太郎"
+        postal_code:
+          type: "string"
+          example: "100-8111"
+        address:
+          type: "string"
+          example: "東京都千代田区千代田1-1"
+        tel:
+          type: "string"
+          example: "03-1234-5678"
+        nickname:
+          type: "string"
+          example: "たろう"
+        profile_image_url:
+          type: "string"
+          nullable: true
+          example: "https://example.com/profile.jpg"
+        description:
+          type: "string"
+          example: "こんにちは、山田太郎です。"
+      required:
+        - id
+        - email
+        - name
+        - birthday
+        - postal_code
+        - tel
+        - nickname
+        - profile_image_url
+        - description
+    BuyerShippingInfo:
+      type: "object"
+      properties:
+        id: 
+          type: "integer"
+          example: 1
+        name:
+          type: "string"
+          example: "山田 太郎"
+        postal_code:
+          type: "string"
+          example: "100-8111"
+        address:
+          type: "string"
+          example: "東京都千代田区千代田1-1"
+        nickname:
+          type: "string"
+          example: "たろう"
+        profile_image_url:
+          type: "string"
+          nullable: true
+          example: "https://example.com/profile.jpg"
+        description:
+          type: "string"
+          example: "こんにちは、山田太郎です。"
+      required:
+        - name
+        - postal_code
+        - address
+        - nickname
+        - profile_image_url
+        - description
+    SellerInfo:
+      type: "object"
+      properties:
+        id: 
+          type: "integer"
+          example: 1
+        nickname:
+          type: "string"
+          example: "たろう"
+        profile_image_url:
+          type: "string"
+          nullable: true
+          example: "https://example.com/profile.jpg"
+        description:
+          type: "string"
+          example: "こんにちは、山田太郎です。"
+      required:
+        - nickname
+        - profile_image_url
+        - description        
+
+    Product:
+      properties:
+        id:
+          type: "integer"
+          example: 1
+        name:
+          type: "string"
+          example: "黒Tシャツ"
+        description:
+          type: "string"
+          example: "ブランドXYZの黒Tシャツです。男性用Sサイズで、新品未使用です。"
+        image_url:
+          type: "string"
+          example: "https://images.pexels.com/photos/9558567/pexels-photo-9558567.jpeg"
+        image_urls:
+          type: "array"
+          items:
+            type: string  
+          example: [
+            "https://images.pexels.com/photos/9558567/pexels-photo-9558567.jpeg",
+            "https://images.pexels.com/photos/9558567/pexels-photo-9558567.jpeg",
+            "https://images.pexels.com/photos/9558567/pexels-photo-9558567.jpeg"
+          ]
+        price:
+          type: "integer"
+          example: 3000
+        deal:
+          $ref: "#/components/schemas/Deal"
+      required:
+        - id
+        - name
+        - description
+        - image_url
+        - image_urls
+        - price
+        - deal
+    Deal:
+      properties:
+        id:
+          type: "integer"
+          example: 1
+        is_purchasable:
+          type: "boolean"
+        seller_info:
+          $ref: "#/components/schemas/SellerInfo"
+      required:
+        - id
+        - is_purchasable
+        - seller_info
+
+    ProductForMyPage:
+      allOf:
+        - $ref: "#/components/schemas/Product"
+        - type: object
+          properties:
+            deal:
+              $ref: "#/components/schemas/DealForMyPage"
+    DealForMyPage:
+      allOf:
+        - $ref: "#/components/schemas/Deal"
+        - type: object
+          properties:
+            buyer_shipping_info:
+              $ref: "#/components/schemas/BuyerShippingInfo"
+            status:
+              type: string
+              enum:
+              - "listing"
+              - "purchased"
+              - "shipping"
+              - "completed"
+              - "canceled"
+            deal_events:
+              type: "array"
+              items:
+                $ref: "#/components/schemas/DealEvent"
+          required:
+            - buyer_shipping_info
+            - status
+            - seller_info
+
+    DealEvent:
+      properties:
+        id:
+          type: integer
+          example: 1
+        actor_type:
+          type: "string"
+          enum:
+            - "seller"
+            - "buyer"
+            - "admin"
+        event_type:
+          type: "string"
+          enum: 
+            - "listing"
+            - "purchase"
+            - "report_delivery"
+            - "report_receipt"
+            - "payment_refund"
+            - "cancel"
+
+    PaymentIntent:
+      properties:
+        client_secret:
+          type: "string"
+
+    OperationResult:
+      properties:
+        success:
+          type: "boolean"
+          example: true
+      required:
+        - success
+
+# ---------- ErrorObjects ----------
+# エラー時のレスポンスは https://docs.github.com/ja/rest/overview/resources-in-the-rest-api#client-errors を参考にしました。
+
+    ErrorResponse:
+      properties:
+        message:
+          type: "string"
+          example: "バリデーションエラー"
+        errors:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/ErrorDetail"
+      required:
+        - message
+
+    ErrorDetail:
+      properties:
+        field:
+          type: "string"
+          example: "email"
+        detail:
+          type: "string"
+          example: "メールアドレスを入力してください"
+      required:
+        - field
+        - detail
+
+# ---------- RequestObjects ----------
+
+    SignupRequest:
+      properties:
+        email:
+          type: "string"
+          example: "test@email.com"
+        password:
+          type: "string"
+          example: "test-password"
+      required:
+        - email
+        - password
+    
+    SignupVerifyRequest:
+      properties:
+        id:
+          type: "number"
+          example: 1
+        expire:
+          type: "number"
+          example: 1699604800
+        signature:
+          type: "string"
+          example: "ABCDEFG123456789"
+      required:
+        - token
+
+    SigninRequest:
+      properties:
+        email:
+          type: "string"
+          example: "test@email.com"
+        password:
+          type: "string"
+          example: "test-password"
+      required:
+        - email
+        - password
+        
+    PutMeRequest:
+      type: "object"
+      properties:
+        name:
+          type: "string"
+          example: "山田 次郎"
+        postal_code:
+          type: "string"
+          example: "100-8112"
+        address:
+          type: "string"
+          example: "東京都千代田区千代田2-2"
+        tel:
+          type: "string"
+          example: "03-1234-5679"
+        nickname:
+          type: "string"
+          example: "じろう"
+        profile_image:
+          type: string
+          format: binary
+        description:
+          type: "string"
+          example: "こんにちは、山田次郎です。"
+
+    PostProductRequest:
+      properties:
+        name:
+          type: "string"
+          example: "オーガニックコットンTシャツ"
+        description:
+          type: "string"
+          example: "100%オーガニックコットンで作られた、肌触りの良いTシャツ。サイズはMです。"
+        price:
+          type: "integer"
+          example: 2500
+        images:
+          type: "array"
+          items:
+            type: "string"
+            format: "binary"
+      required:
+        - name
+        - description
+        - price
+        - images
+
+    ConfirmDealPaymentRequest:
+      properties:
+        payment_intent_id:
+          type: "string"
+      required:
+        - payment_intent
+        - payment_intent_client_secret
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
